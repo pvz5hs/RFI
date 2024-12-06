@@ -37,6 +37,7 @@ def run_flowgraph(center_freq, sampling_rate, bandwidth, output_file, observatio
         cmd = [
             f'touch "{output_file}"'
         ]
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
         cmd = [
             "python3", os.path.expanduser("~/Desktop/RFI/flowgraph.py"),
