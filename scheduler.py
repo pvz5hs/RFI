@@ -22,7 +22,7 @@ def compute_center_frequency(start_freq, bandwidth):
 
 def generate_filename(folder_path, min_freq, timestamp):
     """Generates a filename based on frequency and timestamp."""
-    filename = f"{min_freq}_{timestamp}.txt"
+    filename = f"{min_freq}_{timestamp}.dat"
     return os.path.join(folder_path, filename)
 
 def get_total_runtime(startTime):
@@ -34,6 +34,10 @@ def get_total_runtime(startTime):
 def run_flowgraph(center_freq, sampling_rate, bandwidth, output_file, observation_interval, log_path, start_time, observation_time):
     """Runs the flowgraph script and stops it after the observation interval."""
     try:
+        cmd = [
+            f'touch "{output_file}"'
+        ]
+
         cmd = [
             "python3", os.path.expanduser("~/Desktop/RFI/flowgraph.py"),
             "--center_freq", str(center_freq),
