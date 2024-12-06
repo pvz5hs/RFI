@@ -46,7 +46,7 @@ def run_flowgraph(center_freq, sampling_rate, bandwidth, output_file, observatio
         
         # Wait for the observation interval
         sleep_total = 0
-        while sleep_total < observation interval:
+        while sleep_total < observation_interval:
             time.sleep(1)
             if  get_total_runtime(start_time) < observation_time:
                 break
