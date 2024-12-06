@@ -48,7 +48,7 @@ def run_flowgraph(center_freq, sampling_rate, bandwidth, output_file, observatio
         sleep_total = 0
         while sleep_total < observation_interval:
             time.sleep(1)
-            if get_total_runtime(start_time) < observation_time:
+            if get_total_runtime(start_time) >= observation_time:
                 break
             sleep_total += 1
         
@@ -57,7 +57,14 @@ def run_flowgraph(center_freq, sampling_rate, bandwidth, output_file, observatio
         process.terminate()
         process.wait(timeout=5)
         log_message(log_path, f"Flowgraph terminated successfully (PID: {process.pid}).")
-        time.sleep(10) # Let's wait 10 seocnds here
+        
+        sleep_total = 0
+        while sleep_total < 10:
+            time.sleep(1)
+            if get_total_runtime(start_time) >= observation_time:
+                break
+            sleep_total += 1
+        #time.sleep(10) # Let's wait 10 seocnds here
         return process.communicate()
     except subprocess.TimeoutExpired:
         # Force kill if the process doesn't terminate
