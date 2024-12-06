@@ -69,8 +69,8 @@ def main():
     parser.add_argument("--end_freq", type=float, required=True, help="Ending frequency in Hz")
     parser.add_argument("--bandwidth", type=float, required=True, help="Bandwidth in Hz")
     parser.add_argument("--sampling_rate", type=float, required=True, help="Sampling rate in Hz")
-    parser.add_argument("--observation_interval", type=int, required=True, help="Observation interval in seconds")
-    parser.add_argument("--observation_time", type=int, required=True, help="Total observation time in seconds")
+    parser.add_argument("--observation_interval", type=float, required=True, help="Observation interval in seconds")
+    parser.add_argument("--observation_time", type=float, required=True, help="Total observation time in seconds")
     args = parser.parse_args()
 
     # Variables
