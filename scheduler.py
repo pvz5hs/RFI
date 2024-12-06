@@ -22,7 +22,7 @@ def compute_center_frequency(start_freq, bandwidth):
 
 def generate_filename(folder_path, min_freq, timestamp):
     """Generates a filename based on frequency and timestamp."""
-    filename = f"{(int)min_freq}_{timestamp}.dat"
+    filename = f"{int(min_freq)}_{timestamp}.dat"
     return os.path.join(folder_path, filename)
 
 def get_total_runtime(startTime):
