@@ -9,6 +9,7 @@ import threading
 import os
 import signal
 from PyQt5.QtCore import QThread, pyqtSignal
+import re
 
 class WorkerThread(QThread):
     # Define signals for success and error handling
@@ -248,15 +249,64 @@ class SDRControlGUI(QWidget):
             self.ssh_client.close()
         event.accept()
 
+
+    def extract_info(self, log_line):
+        # Regular expression pattern to extract the required information
+        pattern = re.compile(r"PID: (\d+), Running Time: ([\d:]+), Command: python3 .+ --start_freq (\d+\.\d+) --end_freq (\d+\.\d+) --bandwidth (\d+\.\d+) --sampling_rate ([\d\.]+) --observation_time ([\d\.]+) --observation_interval ([\d\.]+)")
+        
+        # Match the log line against the pattern
+        match = pattern.search(log_line)
+        
+        if match:
+            pid = match.group(1)
+            running_time = match.group(2)
+            start_freq = match.group(3)
+            end_freq = match.group(4)
+            bandwidth = match.group(5)
+            sample_rate = match.group(6)
+            observation_time = match.group(7)
+            observation_interval = match.group(8)
+
+            # Format the output
+            formatted_string = f"Process ID: {pid}\n" \
+                            f"Running Time: {running_time}\n" \
+                            f"Start Frequency: {start_freq} Hz\n" \
+                            f"End Frequency: {end_freq} Hz\n" \
+                            f"Bandwidth: {bandwidth} Hz\n" \
+                            f"Sample Rate: {sample_rate} Hz\n" \
+                            f"Observation Time: {observation_time} seconds\n" \
+                            f"Observation Interval: {observation_interval} seconds"
+            return formatted_string
+        else:
+            return "No match found in the log line."
+
+
+    from PyQt5.QtWidgets import QMessageBox
+
     def ask_to_kill_process(self, process_info):
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Question)
         msg.setText("A process is already running:")
-        msg.setInformativeText(process_info)
+
+        process_string = self.extract_info(process_info)
+        msg.setInformativeText(process_string)
         msg.setWindowTitle("Process Running")
         msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        
+        yes_button = msg.button(QMessageBox.Yes)
+        no_button = msg.button(QMessageBox.No)
+        yes_button.setStyleSheet("""
+            background-color: lightblue;
+            color: black;
+            font-weight: bold;
+        """)
+        no_button.setStyleSheet("""
+            background-color: none;
+            color: black;
+            font-weight: normal;
+        """)
+        msg.setDefaultButton(QMessageBox.Yes)
         response = msg.exec_()
+
         if response == QMessageBox.Yes:
             return True
         else:
@@ -311,11 +361,7 @@ class SDRControlGUI(QWidget):
             self.log_message("Not logged in. Please log in first.")
             return
 
-        # Check if there's already a running instance of the process
-        can_proceed = self.check_and_handle_running_instance()
-        if not can_proceed:
-            self.log_message("Stream canceled by user.")
-            return
+
 
         # Retrieve and convert input values
         start_freq_value = self.start_freq_input.text()
@@ -339,6 +385,17 @@ class SDRControlGUI(QWidget):
             sr_in_hz = self.convert_to_hz(float(sampling_rate_value), sr_unit)
             observation_time_in_seconds = self.convert_to_seconds(float(observation_time), observation_time_unit)
             observation_interval_in_seconds = self.convert_to_seconds(float(observation_interval), observation_interval_unit)
+            if observation_interval_in_seconds > observation_time_in_seconds:
+                self.log_message(f"ERROR: Time Interval > Observation Time")
+                return
+            if start_freq_in_hz > end_freq_in_hz:
+                self.log_message(f'ERROR: Start Frequency Higher Than End Frequency')
+                return
+
+            can_proceed = self.check_and_handle_running_instance()
+            if not can_proceed:
+                self.log_message("Stream canceled by user.")
+                return
             
             # Build the command to execute on the remote Linux machine
             command = f"nohup python3 ~/Desktop/RFI/scheduler.py --start_freq {start_freq_in_hz} --end_freq {end_freq_in_hz} --bandwidth {bw_in_hz} --sampling_rate {sr_in_hz} --observation_time {observation_time_in_seconds} --observation_interval {observation_interval_in_seconds} &"

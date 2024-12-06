@@ -45,7 +45,13 @@ def run_flowgraph(center_freq, sampling_rate, bandwidth, output_file, observatio
         log_message(log_path, f"Started flowgraph (PID: {process.pid}) for center frequency {center_freq} Hz.")
         
         # Wait for the observation interval
-        time.sleep(observation_interval)
+        sleep_total = 0
+        while sleep_total < observation interval:
+            time.sleep(1)
+            if  get_total_runtime(start_time) < observation_time:
+                break
+            sleep_total += 1
+        
         
         # Attempt to terminate the process
         process.terminate()
