@@ -22,17 +22,29 @@ class SDRControlGUI(QWidget):
         self.main_layout = QVBoxLayout()
         
         # Frequency input section
-        freq_layout = QHBoxLayout()
-        self.freq_label = QLabel("Center Frequency:")
-        self.freq_input = QLineEdit()
-        self.freq_input.setPlaceholderText("Enter value")
-        self.freq_unit = QComboBox()
-        self.freq_unit.addItems(["Hz", "kHz", "MHz", "GHz"])
+        start_freq_layout = QHBoxLayout()
+        self.start_freq_label = QLabel("Start Frequency:")
+        self.start_freq_input = QLineEdit()
+        self.start_freq_input.setPlaceholderText("Enter value")
+        self.start_freq_unit = QComboBox()
+        self.start_freq_unit.addItems(["Hz", "kHz", "MHz", "GHz"])
         
-        freq_layout.addWidget(self.freq_label)
-        freq_layout.addWidget(self.freq_input)
-        freq_layout.addWidget(self.freq_unit)
-        self.main_layout.addLayout(freq_layout)
+        start_freq_layout.addWidget(self.start_freq_label)
+        start_freq_layout.addWidget(self.start_freq_input)
+        start_freq_layout.addWidget(self.start_freq_unit)
+        self.main_layout.addLayout(start_freq_layout)
+
+        end_freq_layout = QHBoxLayout()
+        self.end_freq_label = QLabel("Start Frequency:")
+        self.end_freq_input = QLineEdit()
+        self.end_freq_input.setPlaceholderText("Enter value")
+        self.end_freq_unit = QComboBox()
+        self.end_freq_unit.addItems(["Hz", "kHz", "MHz", "GHz"])
+        
+        end_freq_layout.addWidget(self.end_freq_label)
+        end_freq_layout.addWidget(self.end_freq_input)
+        end_freq_layout.addWidget(self.end_freq_unit)
+        self.main_layout.addLayout(end_freq_layout)
         
         # Bandwidth input section
         bw_layout = QHBoxLayout()
@@ -214,7 +226,7 @@ class SDRControlGUI(QWidget):
 
     def check_and_handle_running_instance(self):
         # Check for running instance
-        command = "ps aux | grep 'python3 /path/to/python.py' | grep -v grep"
+        command = "ps aux | grep 'python3 ~/Desktop/RFI/scheduler.py' | grep -v grep"
         output, error = self.execute_command(command)
         
         if error:
@@ -265,8 +277,10 @@ class SDRControlGUI(QWidget):
             self.log_message("Stream canceled by user.")
             return
 
-        freq_value = self.freq_input.text()
-        freq_unit = self.freq_unit.currentText()
+        start_freq_value = self.start_freq_input.text()
+        start_freq_unit = self.start_freq_unit.currentText()
+        end_freq_value = self.end_freq_input.text()
+        end_freq_unit = self.end_freq_unit.currentText()
         bandwidth_value = self.bw_input.text()
         bw_unit = self.bw_unit.currentText()
         sampling_rate_value = self.sr_input.text()
@@ -277,20 +291,19 @@ class SDRControlGUI(QWidget):
         observation_time_unit = self.ot_unit.currentText()
         
         try:
-            freq_in_hz = self.convert_to_hz(float(freq_value), freq_unit)
+            start_freq_in_hz = self.convert_to_hz(float(start_freq_value), start_freq_unit)
+            end_freq_in_hz = self.convert_to_hz(float(end_freq_value), end_freq_unit)
             bw_in_hz = self.convert_to_hz(float(bandwidth_value), bw_unit)
             sr_in_hz = self.convert_to_hz(float(sampling_rate_value), sr_unit)
             observation_time_in_seconds = self.convert_to_seconds(float(observation_time), observation_time_unit)
             observation_interval_in_seconds = self.convert_to_seconds(float(observation_interval), observation_interval_unit)
             
             command = (
-                "touch ~/Desktop/test_file_from_gui_1.txt"
-
-                #f"python3 /path/to/python.py --freq {freq_in_hz} --bandwidth {bw_in_hz} "
+                f"python3 ~/Desktop/RFI/scheduler.py --start_freq {start_freq_in_hz} --end_freq {end_freq_in_hz} --bandwidth {bw_in_hz} "
                 
-                #f"--sampling_rate {sr_in_hz} --observation_time {observation_time_in_seconds} "
+                f"--sampling_rate {sr_in_hz} --observation_time {observation_time_in_seconds} "
                
-               # f"--observation_interval {observation_interval_in_seconds}" 
+                f"--observation_interval {observation_interval_in_seconds}" 
             )
 
             output, error = self.execute_command(command)
