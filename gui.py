@@ -43,10 +43,13 @@ class SDRControlGUI(QWidget):
         self.setWindowTitle("SDR Control Panel")
         self.setGeometry(100, 100, 800, 600)
 
+
         # SSH client
         self.ssh_client = None
         self.log_thread = None
         self.stop_log = threading.Event()
+        self.ssh_client = None  # Initialize ssh_client to None at the start
+        self.is_logged_in = False
 
         # Main layout
         self.main_layout = QVBoxLayout()
@@ -169,6 +172,10 @@ class SDRControlGUI(QWidget):
         print(message)
     
     def login_to_server(self):
+        if self.is_logged_in:
+            self.log_message("Already logged in.")
+            return
+
         # Prompt user for server password
         password, ok = QInputDialog.getText(self, "Login", "Enter server password:", QLineEdit.Password)
         if ok and password:
@@ -176,12 +183,13 @@ class SDRControlGUI(QWidget):
                 self.ssh_client = paramiko.SSHClient()
                 self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 self.ssh_client.connect("172.27.155.167", username="sdr-user", password=password)
+                self.is_logged_in = True  # Set the flag to True once logged in successfully
                 self.log_message("Login successful!")
             except Exception as e:
                 self.log_message(f"Error logging into server: {e}")
         else:
             self.log_message("Login canceled or no password entered.")
-
+    
     def execute_command(self, command):
         if self.ssh_client:
             try:

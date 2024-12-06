@@ -4,6 +4,7 @@ import argparse
 import subprocess
 import datetime
 import time
+import datetime
 
 
 def create_data_folder():
@@ -24,6 +25,11 @@ def generate_filename(folder_path, min_freq, timestamp):
     filename = f"{min_freq}_{timestamp}.txt"
     return os.path.join(folder_path, filename)
 
+def get_total_runtime(startTime):
+    currentTime = datetime.datetime.now()
+    timeDifference = currentTime - startTime
+    totalRuntime = timeDifference.total_seconds()
+    return totalRuntime
 
 def run_flowgraph(center_freq, sampling_rate, bandwidth, output_file, observation_interval, log_path):
     """Runs the flowgraph script and stops it after the observation interval."""
@@ -65,6 +71,8 @@ def log_message(log_path, message):
 
 
 def main():
+    start_time = datetime.datetime.now()
+
     parser = argparse.ArgumentParser(description="Scheduler for flowgraph execution.")
     parser.add_argument("--start_freq", type=float, required=True, help="Starting frequency in Hz")
     parser.add_argument("--end_freq", type=float, required=True, help="Ending frequency in Hz")
@@ -89,7 +97,7 @@ def main():
     initial_start_freq = start_freq  # Preserve the initial start frequency
     total_runtime = 0
 
-    while total_runtime < observation_time:
+    while get_total_runtime(start_time) < observation_time:
         current_freq = start_freq
 
         while current_freq <= end_freq:
@@ -106,8 +114,7 @@ def main():
 
             log_message(log_path, f"Flowgraph completed. Output: {output.strip() if output else 'No output.'}")
             current_freq += bandwidth
-            total_runtime += (observation_interval+10)
-            if (total_runtime > observation_time):
+            if (get_total_runtime(start_time) >= observation_time):
                 break
         # Reset frequencies for next loop
         start_freq = initial_start_freq
