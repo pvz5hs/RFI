@@ -45,7 +45,7 @@ def run_flowgraph(center_freq, sampling_rate, bandwidth, output_file, observatio
         process.terminate()
         process.wait(timeout=5)
         log_message(log_path, f"Flowgraph terminated successfully (PID: {process.pid}).")
-	time.sleep(10) # Let's wait 10 seocnds here
+	    time.sleep(10) # Let's wait 10 seocnds here
         return process.communicate()
     except subprocess.TimeoutExpired:
         # Force kill if the process doesn't terminate
