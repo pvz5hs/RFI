@@ -31,7 +31,7 @@ def get_total_runtime(startTime):
     totalRuntime = timeDifference.total_seconds()
     return totalRuntime
 
-def run_flowgraph(center_freq, sampling_rate, bandwidth, output_file, observation_interval, log_path, start_time):
+def run_flowgraph(center_freq, sampling_rate, bandwidth, output_file, observation_interval, log_path, , start_time, observation_interval):
     """Runs the flowgraph script and stops it after the observation interval."""
     try:
         cmd = [
@@ -112,7 +112,7 @@ def main():
             output_file = generate_filename(folder_path, current_freq, timestamp)
 
             log_message(log_path, f"Running flowgraph for center frequency {center_freq} Hz...")
-            output, error = run_flowgraph(center_freq, sampling_rate, bandwidth, output_file, observation_interval, log_path, start_time)
+            output, error = run_flowgraph(center_freq, sampling_rate, bandwidth, output_file, observation_interval, log_path, start_time, observation_interval)
 
             if error:
                 log_message(log_path, f"Error: {error}. Retrying...")
