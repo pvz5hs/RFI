@@ -34,10 +34,8 @@ def get_total_runtime(startTime):
 def run_flowgraph(center_freq, sampling_rate, bandwidth, output_file, observation_interval, log_path, start_time, observation_time):
     """Runs the flowgraph script and stops it after the observation interval."""
     try:
-        cmd = [
-            f'touch "{output_file}"'
-        ]
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        touch_cmd = ["touch", output_file]
+        subprocess.run(touch_cmd, check=True)
 
         cmd = [
             "python3", os.path.expanduser("~/Desktop/RFI/flowgraph.py"),
