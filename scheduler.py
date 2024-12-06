@@ -31,7 +31,7 @@ def get_total_runtime(startTime):
     totalRuntime = timeDifference.total_seconds()
     return totalRuntime
 
-def run_flowgraph(center_freq, sampling_rate, bandwidth, output_file, observation_interval, log_path, , start_time, observation_interval):
+def run_flowgraph(center_freq, sampling_rate, bandwidth, output_file, observation_interval, log_path, start_time, observation_interval):
     """Runs the flowgraph script and stops it after the observation interval."""
     try:
         cmd = [
