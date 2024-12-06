@@ -106,11 +106,12 @@ def main():
 
             log_message(log_path, f"Flowgraph completed. Output: {output.strip() if output else 'No output.'}")
             current_freq += bandwidth
-
+            total_runtime += (observation_interval+10)
+            if (total_runtime > observation_time):
+                break
         # Reset frequencies for next loop
         start_freq = initial_start_freq
-        total_runtime += (observation_interval+10)
-
+    
     log_message(log_path, "Observation complete. Scheduler terminated.")
 
 

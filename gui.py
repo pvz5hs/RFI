@@ -1,10 +1,40 @@
 import paramiko
+import subprocess
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QLineEdit, QComboBox, QPushButton, QInputDialog, QMessageBox, QTextEdit
 )
 from PyQt5.QtCore import Qt
 import threading
+import os
+import signal
+from PyQt5.QtCore import QThread, pyqtSignal
+
+class WorkerThread(QThread):
+    # Define signals for success and error handling
+    finished = pyqtSignal(str)
+    error = pyqtSignal(str)
+
+    def __init__(self, command, ssh_client):
+        super().__init__()
+        self.command = command
+        self.ssh_client = ssh_client
+
+    def run(self):
+        try:
+            stdin, stdout, stderr = self.ssh_client.exec_command(self.command)
+            output = stdout.read().decode().strip()
+            error = stderr.read().decode().strip()
+
+            if output:
+                self.finished.emit(f"Command Output: {output}")
+            if error:
+                self.error.emit(f"Command Error: {error}")
+            if not error and not output:
+                self.finished.emit("Scheduler process started successfully on the remote server.")
+        except Exception as e:
+            self.error.emit(f"Error executing the command: {e}")
+
 
 
 class SDRControlGUI(QWidget):
@@ -35,7 +65,7 @@ class SDRControlGUI(QWidget):
         self.main_layout.addLayout(start_freq_layout)
 
         end_freq_layout = QHBoxLayout()
-        self.end_freq_label = QLabel("Start Frequency:")
+        self.end_freq_label = QLabel("End Frequency:")
         self.end_freq_input = QLineEdit()
         self.end_freq_input.setPlaceholderText("Enter value")
         self.end_freq_unit = QComboBox()
@@ -226,7 +256,7 @@ class SDRControlGUI(QWidget):
 
     def check_and_handle_running_instance(self):
         # Check for running instance
-        command = "ps aux | grep 'python3 ~/Desktop/RFI/scheduler.py' | grep -v grep"
+        command = 'ps aux | grep "python3 $HOME/Desktop/RFI/scheduler.py" | grep -v grep'
         output, error = self.execute_command(command)
         
         if error:
@@ -272,11 +302,14 @@ class SDRControlGUI(QWidget):
         if not self.ssh_client:
             self.log_message("Not logged in. Please log in first.")
             return
+
+        # Check if there's already a running instance of the process
         can_proceed = self.check_and_handle_running_instance()
         if not can_proceed:
             self.log_message("Stream canceled by user.")
             return
 
+        # Retrieve and convert input values
         start_freq_value = self.start_freq_input.text()
         start_freq_unit = self.start_freq_unit.currentText()
         end_freq_value = self.end_freq_input.text()
@@ -289,8 +322,9 @@ class SDRControlGUI(QWidget):
         observation_interval_unit = self.oi_unit.currentText()
         observation_time = self.ot_input.text()
         observation_time_unit = self.ot_unit.currentText()
-        
+
         try:
+            # Convert input values to the appropriate units (Hz for frequencies, seconds for time)
             start_freq_in_hz = self.convert_to_hz(float(start_freq_value), start_freq_unit)
             end_freq_in_hz = self.convert_to_hz(float(end_freq_value), end_freq_unit)
             bw_in_hz = self.convert_to_hz(float(bandwidth_value), bw_unit)
@@ -298,22 +332,23 @@ class SDRControlGUI(QWidget):
             observation_time_in_seconds = self.convert_to_seconds(float(observation_time), observation_time_unit)
             observation_interval_in_seconds = self.convert_to_seconds(float(observation_interval), observation_interval_unit)
             
-            command = (
-                f"python3 ~/Desktop/RFI/scheduler.py --start_freq {start_freq_in_hz} --end_freq {end_freq_in_hz} --bandwidth {bw_in_hz} "
-                
-                f"--sampling_rate {sr_in_hz} --observation_time {observation_time_in_seconds} "
-               
-                f"--observation_interval {observation_interval_in_seconds}" 
-            )
+            # Build the command to execute on the remote Linux machine
+            command = f"nohup python3 ~/Desktop/RFI/scheduler.py --start_freq {start_freq_in_hz} --end_freq {end_freq_in_hz} --bandwidth {bw_in_hz} --sampling_rate {sr_in_hz} --observation_time {observation_time_in_seconds} --observation_interval {observation_interval_in_seconds} &"
+            
+            # Create the worker thread to execute the command
+            self.log_message(f"Starting background task to execute command: {command}")
+            self.worker_thread = WorkerThread(command, self.ssh_client)
+            self.worker_thread.finished.connect(self.log_message)
+            self.worker_thread.error.connect(self.log_message)
+            
+            # Start the worker thread
+            self.worker_thread.start()
 
-            output, error = self.execute_command(command)
-            if error:
-                self.log_message(f"Error: {error}")
-            else:
-                self.log_message(f"Output: {output}")
-        
         except ValueError:
             self.log_message("Invalid input. Please enter numeric values.")
+        except Exception as e:
+            self.log_message(f"Error preparing the command: {e}")
+
 
 
 if __name__ == "__main__":
